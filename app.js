@@ -210,13 +210,13 @@ const MINI_GAMES_CONFIG = [
         render: renderSpatialRotation
     },
     {
-        id: 'hexagon-strategy',
+        id: 'number-sequence',
         num: 8,
-        title: 'Hexagon Strategy Board',
-        category: '19-Cell Tactical Intercept Puzzle',
-        icon: 'fa-draw-polygon',
-        desc: 'Temukan 1 titik simpul heksagon kunci untuk memotong jalur ancaman AI pada papan 19 sel!',
-        render: renderHexagonStrategy
+        title: 'Pola Deret Angka',
+        category: 'Analisis Deret & Logika Barisan',
+        icon: 'fa-arrow-trend-up',
+        desc: 'Analisis logika deret angka unik (aritmatika, geometri, kuadrat, atau fibonacci) lalu temukan angka berikutnya!',
+        render: renderNumberSequence
     },
     {
         id: 'deduction-logic-grid',
@@ -1661,148 +1661,155 @@ function renderSpatialRotation(container) {
 }
 
 // ==========================================================
-// MINI GAME 8: HEXAGON STRATEGY BOARD (19-CELL TACTICAL INTERCEPT)
+// MINI GAME 8: TEBAK POLA DERET ANGKA (NUMBER SEQUENCE)
 // ==========================================================
-function renderHexagonStrategy(container) {
+function renderNumberSequence(container) {
     stopMiniGameTimer();
 
-    // 19 Hex Layout (Center + 6 Ring 1 + 12 Ring 2)
-    const hexLayout = [
-        { id: 0, x: 240, y: 150, name: 'Pusat Arena', ring: 0, sector: 'Pusat' },
-        // Ring 1 (radius ~50)
-        { id: 1, x: 240, y: 100, name: 'Ring 1 Utara', ring: 1, sector: 'Utara' },
-        { id: 2, x: 283, y: 125, name: 'Ring 1 Timur Laut', ring: 1, sector: 'Timur' },
-        { id: 3, x: 283, y: 175, name: 'Ring 1 Tenggara', ring: 1, sector: 'Timur' },
-        { id: 4, x: 240, y: 200, name: 'Ring 1 Selatan', ring: 1, sector: 'Selatan' },
-        { id: 5, x: 197, y: 175, name: 'Ring 1 Barat Daya', ring: 1, sector: 'Barat' },
-        { id: 6, x: 197, y: 125, name: 'Ring 1 Barat Laut', ring: 1, sector: 'Barat' },
-        // Ring 2 (radius ~100)
-        { id: 7, x: 240, y: 50, name: 'Ring 2 Puncak Utara', ring: 2, sector: 'Utara' },
-        { id: 8, x: 283, y: 75, name: 'Ring 2 Timur Laut Atas', ring: 2, sector: 'Timur' },
-        { id: 9, x: 326, y: 100, name: 'Ring 2 Ujung Timur Atas', ring: 2, sector: 'Timur' },
-        { id: 10, x: 326, y: 150, name: 'Ring 2 Timur Tengah', ring: 2, sector: 'Timur' },
-        { id: 11, x: 326, y: 200, name: 'Ring 2 Tenggara Luar', ring: 2, sector: 'Timur' },
-        { id: 12, x: 283, y: 225, name: 'Ring 2 Selatan-Timur', ring: 2, sector: 'Timur' },
-        { id: 13, x: 240, y: 250, name: 'Ring 2 Puncak Selatan', ring: 2, sector: 'Selatan' },
-        { id: 14, x: 197, y: 225, name: 'Ring 2 Selatan-Barat', ring: 2, sector: 'Barat' },
-        { id: 15, x: 154, y: 200, name: 'Ring 2 Barat Daya Luar', ring: 2, sector: 'Barat' },
-        { id: 16, x: 154, y: 150, name: 'Ring 2 Barat Tengah', ring: 2, sector: 'Barat' },
-        { id: 17, x: 154, y: 100, name: 'Ring 2 Ujung Barat Atas', ring: 2, sector: 'Barat' },
-        { id: 18, x: 197, y: 75, name: 'Ring 2 Barat Laut Atas', ring: 2, sector: 'Barat' }
-    ];
+    // Berbagai jenis pola deret edukatif
+    const patternTypes = ['arithmetic', 'geometric', 'squares', 'fibonacci', 'alternating', 'step_increasing'];
+    const pType = patternTypes[Math.floor(Math.random() * patternTypes.length)];
 
-    // Helper: calculate distance between two hex centers
-    function getDistance(c1, c2) {
-        const dx = c1.x - c2.x;
-        const dy = c1.y - c2.y;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
+    let sequence = [];
+    let targetAns = 0;
+    let patternExplanation = '';
 
-    // Neighbors in 19-hex grid are ~50px apart
-    function getNeighbors(cellId) {
-        const source = hexLayout[cellId];
-        return hexLayout
-            .filter(c => c.id !== cellId && getDistance(source, c) < 60)
-            .map(c => c.id);
-    }
-
-    // Pick a target cell
-    const targetCellId = Math.floor(Math.random() * 19);
-    const targetCell = hexLayout[targetCellId];
-    const neighbors = getNeighbors(targetCellId);
-
-    // Pick 3 AI threat cells that are adjacent to or surround target, plus 1 decoy
-    let aiCells = [...neighbors].sort(() => Math.random() - 0.5).slice(0, 2);
-    const otherNonTarget = hexLayout
-        .filter(c => c.id !== targetCellId && !aiCells.includes(c.id))
-        .map(c => c.id)
-        .sort(() => Math.random() - 0.5);
-
-    while (aiCells.length < 4 && otherNonTarget.length > 0) {
-        aiCells.push(otherNonTarget.pop());
-    }
-
-    function hexPoints(cx, cy, r = 26) {
-        const pts = [];
-        for (let i = 0; i < 6; i++) {
-            const angle = (Math.PI / 3) * i;
-            pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+    if (pType === 'arithmetic') {
+        const start = Math.floor(Math.random() * 30) + 3;
+        const diff = (Math.floor(Math.random() * 8) + 2) * (Math.random() > 0.3 ? 1 : -1);
+        for (let i = 0; i < 5; i++) {
+            sequence.push(start + i * diff);
         }
-        return pts.join(' ');
+        targetAns = start + 5 * diff;
+        patternExplanation = `Pola deret aritmatika dengan beda/selisih ${diff > 0 ? '+' + diff : diff}.`;
+    } else if (pType === 'geometric') {
+        const start = Math.floor(Math.random() * 5) + 2;
+        const ratio = Math.floor(Math.random() * 2) + 2; // 2 or 3
+        for (let i = 0; i < 5; i++) {
+            sequence.push(start * Math.pow(ratio, i));
+        }
+        targetAns = start * Math.pow(ratio, 5);
+        patternExplanation = `Pola deret geometri dengan rasio pengali ×${ratio}.`;
+    } else if (pType === 'squares') {
+        const startN = Math.floor(Math.random() * 6) + 1; // 1 to 6
+        for (let i = 0; i < 5; i++) {
+            const n = startN + i;
+            sequence.push(n * n);
+        }
+        const nextN = startN + 5;
+        targetAns = nextN * nextN;
+        patternExplanation = `Pola kuadrat berurutan: (${startN}², ${startN + 1}², ..., ${nextN}²).`;
+    } else if (pType === 'fibonacci') {
+        const a = Math.floor(Math.random() * 4) + 1;
+        const b = Math.floor(Math.random() * 4) + a;
+        sequence = [a, b];
+        for (let i = 2; i < 5; i++) {
+            sequence.push(sequence[i - 1] + sequence[i - 2]);
+        }
+        targetAns = sequence[4] + sequence[3];
+        patternExplanation = `Pola Fibonacci (setiap angka adalah jumlah 2 angka sebelumnya).`;
+    } else if (pType === 'step_increasing') {
+        // Beda bertambah: +2, +3, +4, +5, dst.
+        let cur = Math.floor(Math.random() * 15) + 2;
+        let step = Math.floor(Math.random() * 3) + 2; // e.g. 2, 3, 4
+        sequence.push(cur);
+        for (let i = 0; i < 4; i++) {
+            cur += (step + i);
+            sequence.push(cur);
+        }
+        targetAns = cur + (step + 4);
+        patternExplanation = `Pola selisih bertingkat: beda antar angka bertambah +1 di tiap langkah.`;
+    } else {
+        // Alternating: +A, -B atau *2, +1
+        let cur = Math.floor(Math.random() * 10) + 4;
+        const addVal = Math.floor(Math.random() * 5) + 3;
+        const subVal = Math.floor(Math.random() * 3) + 1;
+        sequence.push(cur);
+        for (let i = 0; i < 4; i++) {
+            if (i % 2 === 0) cur += addVal;
+            else cur -= subVal;
+            sequence.push(cur);
+        }
+        targetAns = (4 % 2 === 0) ? cur + addVal : cur - subVal;
+        patternExplanation = `Pola operasi selang-seling (+${addVal}, -${subVal}).`;
     }
 
-    // Generate tactical clues based on properties without revealing the exact name
-    let ringDescription = targetCell.ring === 0 
-        ? 'berada tepat di <strong>Pusat Lingkaran Inti (Ring 0)</strong>' 
-        : targetCell.ring === 1 
-            ? 'berada di <strong>Lingkaran Dalam (Ring 1)</strong>' 
-            : 'berada di <strong>Lingkaran Luar (Ring 2)</strong>';
-
-    let sectorDescription = targetCell.ring === 0 
-        ? 'menghubungkan seluruh sektor arah' 
-        : `menghadap ke <strong>Sektor ${targetCell.sector}</strong>`;
-
-    let canClickHex = false;
+    // Buat 4 opsi jawaban pilihan ganda
+    const options = [
+        targetAns,
+        targetAns + (Math.floor(Math.random() * 4) + 1),
+        targetAns - (Math.floor(Math.random() * 4) + 1),
+        targetAns + (Math.random() > 0.5 ? 8 : -8)
+    ];
+    const uniqueOptions = Array.from(new Set(options));
+    while (uniqueOptions.length < 4) {
+        const randOpt = targetAns + Math.floor(Math.random() * 16) - 8;
+        if (randOpt !== targetAns && !uniqueOptions.includes(randOpt)) {
+            uniqueOptions.push(randOpt);
+        }
+    }
+    uniqueOptions.sort(() => Math.random() - 0.5);
 
     container.innerHTML = `
         <div class="game-instruction-banner">
-            <i class="fa-solid fa-draw-polygon banner-icon"></i>
+            <i class="fa-solid fa-arrow-trend-up banner-icon"></i>
             <div class="banner-text">
-                <h4>Hexagon Tactical 19-Cell (Soal #${GameState.miniGameRound} / 10)</h4>
-                <p id="hex-status">Analisis petunjuk taktis di bawah ini, lalu tekan tombol <strong>"Mulai Pilih Simpul"</strong>!</p>
+                <h4>Pola Deret Angka (Soal #${GameState.miniGameRound} / 10)</h4>
+                <p id="ns-status">Amati logika barisan angka di bawah ini, lalu tekan tombol <strong>"Mulai Jawab"</strong>!</p>
             </div>
         </div>
 
-        <div class="deduction-clues-box" style="margin-bottom: 0.5rem;">
-            <h5 style="color: var(--color-gold); margin-bottom: 0.2rem;"><i class="fa-solid fa-radar"></i> PETUNJUK TAKTIS SIMPUL SASARAN:</h5>
-            <ul style="font-size: 0.85rem;">
-                <li><i class="fa-solid fa-crosshairs gold-color"></i> Posisi Orbit: Simpul kunci ${ringDescription}.</li>
-                <li><i class="fa-solid fa-compass gold-color"></i> Orientasi Wilayah: Terletak ${sectorDescription}.</li>
-                <li><i class="fa-solid fa-shield-halved gold-color"></i> Status: Merupakan sel kosong (bukan sel merah AI) yang memblokir titik konvergensi!</li>
-            </ul>
-        </div>
+        <div class="sequence-display-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 540px; margin: 1.5rem auto; text-align: center; box-shadow: 0 0 30px rgba(6, 182, 212, 0.1);">
+            <div style="font-size: 0.85rem; font-family: var(--font-orbitron); color: var(--color-gold); letter-spacing: 1.5px; margin-bottom: 1rem; text-transform: uppercase;">
+                <i class="fa-solid fa-brain"></i> ANALISIS BARISAN BERIKUT
+            </div>
 
-        <div class="hex-board-container" style="max-width: 500px; margin: 0.25rem auto;">
-            <svg class="hex-svg" viewBox="130 30 220 240" style="max-height: 260px;">
-                ${hexLayout.map(h => `
-                    <polygon class="hex-cell ${aiCells.includes(h.id) ? 'ai' : ''}" id="hx-${h.id}" data-id="${h.id}" points="${hexPoints(h.x, h.y)}" />
+            <div class="sequence-numbers-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                ${sequence.map(num => `
+                    <div class="seq-box" style="min-width: 52px; height: 55px; padding: 0 0.5rem; background: rgba(30, 41, 59, 0.9); border: 2px solid var(--border-subtle); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-family: var(--font-orbitron); font-size: 1.4rem; font-weight: 700; color: #fff;">
+                        ${num}
+                    </div>
                 `).join('')}
-            </svg>
+                <div class="seq-box target" style="min-width: 52px; height: 55px; padding: 0 0.5rem; background: rgba(6, 182, 212, 0.15); border: 2px dashed var(--color-cyan); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-family: var(--font-orbitron); font-size: 1.6rem; font-weight: 800; color: var(--color-cyan);">
+                    ?
+                </div>
+            </div>
         </div>
 
-        <div style="text-align: center; margin-top: 0.75rem;" id="hex-start-wrapper">
-            <button id="hex-start-btn" class="btn-action primary" style="font-size: 1.1rem; padding: 0.85rem 2rem;">
-                <i class="fa-solid fa-play"></i> Mulai Analisis & Pilih Simpul
+        <div style="text-align: center; margin: 1.25rem 0;" id="ns-start-wrapper">
+            <button id="ns-start-btn" class="btn-action primary" style="font-size: 1.1rem; padding: 0.85rem 2.2rem;">
+                <i class="fa-solid fa-play"></i> Mulai Jawab
             </button>
         </div>
 
-        <div id="hex-prompt-active" style="text-align: center; color: var(--color-cyan); font-weight: 700; font-size: 0.85rem; display: none;">
-            <i class="fa-solid fa-hand-pointer"></i> Klik 1 sel heksagon sasaran taktis pada peta 19 sel di atas!
+        <div id="ns-options-grid" style="display: none; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; max-width: 380px; margin: 1rem auto;">
+            ${uniqueOptions.map(opt => `
+                <button class="btn-action secondary ns-opt-btn" data-val="${opt}" style="font-size: 1.4rem; padding: 0.8rem 1rem; font-family: var(--font-orbitron); font-weight: 700;">
+                    ${opt}
+                </button>
+            `).join('')}
         </div>
     `;
 
-    const startBtn = document.getElementById('hex-start-btn');
-    const startWrap = document.getElementById('hex-start-wrapper');
-    const promptActive = document.getElementById('hex-prompt-active');
+    const startBtn = document.getElementById('ns-start-btn');
+    const startWrap = document.getElementById('ns-start-wrapper');
+    const optionsGrid = document.getElementById('ns-options-grid');
 
     startBtn.addEventListener('click', () => {
         Sound.click();
-        canClickHex = true;
         startWrap.style.display = 'none';
-        promptActive.style.display = 'block';
-        document.getElementById('hex-status').textContent = 'Temukan 1 simpul heksagon kunci untuk mencegat formasi AI dalam 10 detik!';
+        optionsGrid.style.display = 'grid';
+        document.getElementById('ns-status').textContent = 'Pilih angka lanjutan yang sesuai dengan pola deret!';
         startMiniGameTimer();
     });
 
-    hexLayout.forEach(h => {
-        const cell = document.getElementById(`hx-${h.id}`);
-        cell.addEventListener('click', () => {
-            if (!canClickHex || aiCells.includes(h.id)) return;
-            if (h.id === targetCellId) {
-                cell.classList.add('player');
+    container.querySelectorAll('.ns-opt-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const selected = parseInt(btn.getAttribute('data-val'), 10);
+            if (selected === targetAns) {
                 handleMiniGameSuccess();
             } else {
-                handleMiniGameFailure(`Titik yang kamu pilih (${h.name}) keliru. Simpul yang memenuhi kriteria taktis adalah ${targetCell.name}. Progres di-reset ke Soal #1!`);
+                handleMiniGameFailure(`Jawaban keliru! Angka lanjutan yang benar adalah ${targetAns}. (${patternExplanation}) Progres di-reset ke Soal #1!`);
             }
         });
     });
