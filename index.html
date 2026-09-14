@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clash of Champions - The Ultimate Brain Arena</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Animated Stars & Mesh Glow -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-grid-overlay"></div>
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+        <div class="logo-group">
+            <div class="logo-badge">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+            <div>
+                <h1 class="nav-title">CLASH OF <span class="gold-gradient">CHAMPIONS</span></h1>
+                <p class="nav-subtitle">Single Player Brain Arena</p>
+            </div>
+        </div>
+
+        <div class="nav-controls">
+            <button id="sound-toggle-btn" class="nav-btn" title="Toggle Suara">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+            <div class="player-tag">
+                <i class="fa-solid fa-user-astronaut"></i>
+                <span id="player-display-name">Player 1</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="main-container">
+
+        <!-- ============================================== -->
+        <!-- VIEW 1: TAHAP 1 - GERBANG MATEMATIKA CEPAT -->
+        <!-- ============================================== -->
+        <section id="view-math-gate" class="game-view active">
+            <div class="gate-wrapper">
+                <div class="gate-header">
+                    <div class="stage-tag"><i class="fa-solid fa-shield-halved"></i> TAHAP 1 : INITIAL CHALLENGE</div>
+                    <h2 class="gate-title">Gerbang Matematika Cepat</h2>
+                    <p class="gate-desc">
+                        Buktikan kecepatan kalkulasi mentalmu! Jawab <span class="highlight-gold">10 Soal berturut-turut TANPA SALAH</span>.
+                        Batas waktu <span class="highlight-gold">8 detik per soal</span>. Jika salah atau waktu habis, sistem akan <span class="highlight-red">me-reset progresmu kembali ke Soal 1</span>.
+                    </p>
+                </div>
+
+                <!-- Streak Progress Indicator -->
+                <div class="streak-tracker-card">
+                    <div class="tracker-header">
+                        <span><i class="fa-solid fa-bolt gold-color"></i> Progres Beruntun</span>
+                        <span id="gate-streak-count" class="streak-badge">0 / 10 Soal</span>
+                    </div>
+                    <div class="streak-dots-container" id="streak-dots">
+                        <!-- 10 dots injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Math Problem Card -->
+                <div class="math-problem-box" id="gate-problem-box">
+                    <div id="gate-start-card" style="text-align: center; padding: 1rem 0;">
+                        <div style="font-size: 3rem; color: var(--color-gold); margin-bottom: 0.75rem;">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+                        <h3 style="font-family: var(--font-orbitron); color: #fff; font-size: 1.4rem; margin-bottom: 0.5rem;">GERBANG MATEMATIKA CEPAT</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.6;">
+                            Jawab <strong>10 soal aritmatika 2-digit</strong> secara beruntun dengan batas waktu <strong>8 detik per soal</strong>. Tekan tombol di bawah saat kamu siap!
+                        </p>
+                        <button id="gate-start-btn" class="btn-action primary" style="font-size: 1.15rem; padding: 0.9rem 2.5rem;">
+                            <i class="fa-solid fa-play"></i> Mulai Tantangan Gerbang
+                        </button>
+                    </div>
+
+                    <div id="gate-active-content" style="display: none;">
+                        <div class="problem-meta">
+                            <span class="q-label" id="gate-q-number">Soal #1</span>
+                            <div class="time-badge" id="gate-timer-badge">
+                                <i class="fa-solid fa-stopwatch"></i> <span id="gate-timer">8.0s</span>
+                            </div>
+                        </div>
+
+                        <!-- 8-Second Countdown Progress Bar -->
+                        <div class="gate-countdown-bar-wrapper">
+                            <div id="gate-countdown-fill" class="gate-countdown-fill"></div>
+                        </div>
+
+                        <div class="math-expression-display" id="gate-equation">
+                            <span class="num" id="gate-num1">24</span>
+                            <span class="op" id="gate-op">+</span>
+                            <span class="num" id="gate-num2">39</span>
+                            <span class="eq">=</span>
+                            <span class="placeholder">?</span>
+                        </div>
+
+                        <!-- Input Box -->
+                        <form id="gate-form" onsubmit="return false;" class="math-form">
+                            <input type="text" id="gate-input" placeholder="Masukkan jawaban..." autocomplete="off">
+                            <button type="submit" id="gate-submit-btn" class="btn-action primary">
+                                <span>SUBMIT</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </form>
+
+                        <!-- Alert / Status Feedback -->
+                        <div id="gate-feedback" class="gate-feedback hidden"></div>
+
+                        <!-- Numpad for Mobile / Touch -->
+                        <div class="virtual-numpad">
+                            <button type="button" class="np-btn" data-key="1">1</button>
+                            <button type="button" class="np-btn" data-key="2">2</button>
+                            <button type="button" class="np-btn" data-key="3">3</button>
+                            <button type="button" class="np-btn" data-key="4">4</button>
+                            <button type="button" class="np-btn" data-key="5">5</button>
+                            <button type="button" class="np-btn" data-key="6">6</button>
+                            <button type="button" class="np-btn" data-key="7">7</button>
+                            <button type="button" class="np-btn" data-key="8">8</button>
+                            <button type="button" class="np-btn" data-key="9">9</button>
+                            <button type="button" class="np-btn fn" data-key="clear">C</button>
+                            <button type="button" class="np-btn" data-key="0">0</button>
+                            <button type="button" class="np-btn fn" data-key="back"><i class="fa-solid fa-delete-left"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 2: TAHAP 2 - DASHBOARD GAME -->
+        <!-- ============================================== -->
+        <section id="view-dashboard" class="game-view">
+            <div class="dashboard-wrapper">
+                <!-- Dashboard Header -->
+                <div class="dashboard-header-card">
+                    <div class="header-info">
+                        <div class="badge-stage"><i class="fa-solid fa-crown gold-color"></i> TAHAP 2 : ARENA 10 TANTANGAN</div>
+                        <h2 class="dash-title">Arena Clash of Champions</h2>
+                        <p class="dash-desc">Pilih kartu mini-game secara bebas. Kalahkan setiap game untuk mengunci kemenangan!</p>
+                    </div>
+
+                    <div class="overall-progress-box">
+                        <div class="prog-text">
+                            <span>Progres Kemenangan</span>
+                            <span id="dash-progress-text" class="prog-score">0 / 10 Selesai</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="dash-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid of 10 Games -->
+                <div class="game-cards-grid" id="games-grid">
+                    <!-- Cards 1 to 10 rendered dynamically with rich detail -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 3: MINI-GAME MODAL CONTAINER -->
+        <!-- ============================================== -->
+        <section id="view-game-arena" class="game-view">
+            <div class="arena-wrapper">
+                <!-- Arena Top Navigation -->
+                <div class="arena-header">
+                    <button id="btn-back-dashboard" class="btn-back">
+                        <i class="fa-solid fa-arrow-left"></i> <span>Kembali ke Dashboard</span>
+                    </button>
+                    <div class="arena-game-tag" id="arena-title-tag">
+                        <i class="fa-solid fa-gamepad"></i> <span id="arena-game-name">Nama Game</span>
+                    </div>
+                </div>
+
+                <!-- Arena Mini-Game Round & Timer Bar -->
+                <div class="arena-meta-card">
+                    <div class="arena-meta-top">
+                        <div class="arena-round-badge">
+                            <i class="fa-solid fa-layer-group gold-color"></i>
+                            <span id="arena-round-text">Soal 1 / 10</span>
+                        </div>
+                        <div class="time-badge" id="arena-timer-badge">
+                            <i class="fa-solid fa-stopwatch"></i>
+                            <span id="arena-timer">10.0s</span>
+                        </div>
+                    </div>
+                    <div class="arena-countdown-bar-wrapper">
+                        <div id="arena-countdown-fill" class="arena-countdown-fill"></div>
+                    </div>
+                    <div class="arena-dots-container" id="arena-streak-dots">
+                        <!-- 10 dots for mini-game rounds -->
+                    </div>
+                </div>
+
+                <!-- Mini Game Play Board Card -->
+                <div class="game-board-card" id="game-board-container">
+                    <!-- Content will be rendered dynamically based on selected game -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 4: TAHAP 3 - VICTORY SCREEN -->
+        <!-- ============================================== -->
+        <section id="view-victory" class="game-view">
+            <div class="victory-wrapper">
+                <div class="victory-trophy-anim">
+                    <div class="trophy-ring"></div>
+                    <i class="fa-solid fa-trophy trophy-icon"></i>
+                </div>
+
+                <div class="victory-content-card">
+                    <div class="victory-badge"><i class="fa-solid fa-certificate"></i> GRAND VICTORY</div>
+                    <h2 class="victory-main-header">SELAMAT! KAMU ADALAH THE ULTIMATE CHAMPION!</h2>
+                    
+                    <div class="victory-reward-box">
+                        <p class="reward-text">
+                            "Luar biasa! Kamu telah membuktikan ketajaman logika, memori, dan kecepatan berpikir tingkat tinggi setara peserta Clash of Champions. Klaim gelar <strong>'Gelar Otak Emas'</strong> dan simpan screenshot sertifikat kemenanganmu ini sebagai bukti keahlianmu!"
+                        </p>
+                    </div>
+
+                    <!-- Interactive Certificate Preview Card -->
+                    <div class="certificate-container" id="certificate-node">
+                        <div class="cert-border">
+                            <div class="cert-inner">
+                                <div class="cert-header">
+                                    <i class="fa-solid fa-brain cert-logo"></i>
+                                    <h3>SERTIFIKAT KEMENANGAN</h3>
+                                    <p>CLASH OF CHAMPIONS - SINGLE PLAYER ARENA</p>
+                                </div>
+                                <div class="cert-body">
+                                    <p class="cert-given-to">Diberikan Penghargaan Tertinggi Kepada:</p>
+                                    <h2 class="cert-name" id="cert-player-name">CHAMPION OF MIND</h2>
+                                    <div class="cert-badge-rank">
+                                        <i class="fa-solid fa-medal"></i> GELAR OTAK EMAS
+                                    </div>
+                                    <p class="cert-desc">Telah Berhasil Menyelesaikan 10 Tantangan Mini Game & Gerbang Matematika Cepat</p>
+                                </div>
+                                <div class="cert-footer">
+                                    <div class="cert-signature">
+                                        <span class="sign-line"></span>
+                                        <small>Dewan Juri Arena</small>
+                                    </div>
+                                    <div class="cert-stamp">
+                                        <i class="fa-solid fa-award"></i>
+                                        <span>VERIFIED MASTER</span>
+                                    </div>
+                                    <div class="cert-date" id="cert-date-text">
+                                        14 September 2026
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Victory Action Buttons -->
+                    <div class="victory-actions">
+                        <button id="btn-download-cert" class="btn-action primary">
+                            <i class="fa-solid fa-download"></i> Unduh Sertifikat (PNG)
+                        </button>
+                        <button id="btn-restart-all" class="btn-action secondary">
+                            <i class="fa-solid fa-rotate-right"></i> Mainkan Ulang Semua
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Modal for Alerts/Notifications -->
+    <div id="game-modal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-icon" id="modal-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3 id="modal-title" class="modal-title">Judul Notifikasi</h3>
+            <p id="modal-body" class="modal-body">Pesan notifikasi ada di sini.</p>
+            <div class="modal-actions" id="modal-actions">
+                <button id="modal-btn-ok" class="btn-action primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
