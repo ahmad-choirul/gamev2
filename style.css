@@ -1705,6 +1705,33 @@ body {
     margin-bottom: 1.75rem;
 }
 
+.btn-icon-mini {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    margin-left: 0.35rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.btn-icon-mini:hover {
+    color: var(--color-crimson);
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.player-tag {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.player-tag:hover {
+    border-color: var(--color-cyan);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+}
+
 .modal-actions {
     display: flex;
     justify-content: center;

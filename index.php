@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clash of Champions - The Ultimate Brain Arena</title>
+    <title>Clash of Birthday - The Ultimate Brain Arena</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <!-- Background Animated Stars & Mesh Glow -->
     <div class="bg-glow bg-glow-1"></div>
@@ -23,11 +27,11 @@
     <header class="top-nav">
         <div class="logo-group">
             <div class="logo-badge">
-                <i class="fa-solid fa-brain"></i>
+                <i class="fa-solid fa-cake-candles"></i>
             </div>
             <div>
-                <h1 class="nav-title">CLASH OF <span class="gold-gradient">CHAMPIONS</span></h1>
-                <p class="nav-subtitle">Single Player Brain Arena</p>
+                <h1 class="nav-title">CLASH OF <span class="gold-gradient">BIRTHDAY</span></h1>
+                <p class="nav-subtitle">Special Birthday Brain Arena</p>
             </div>
         </div>
 
@@ -35,9 +39,11 @@
             <button id="sound-toggle-btn" class="nav-btn" title="Toggle Suara">
                 <i class="fa-solid fa-volume-high"></i>
             </button>
-            <div class="player-tag">
+            <div class="player-tag" id="player-profile-tag" title="Klik untuk ganti username/profil">
                 <i class="fa-solid fa-user-astronaut"></i>
-                <span id="player-display-name">Player 1</span>
+                <span id="player-display-name">Guest</span>
+                <button id="btn-switch-user" class="btn-icon-mini" title="Ganti User"><i
+                        class="fa-solid fa-arrow-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
@@ -54,8 +60,10 @@
                     <div class="stage-tag"><i class="fa-solid fa-shield-halved"></i> TAHAP 1 : INITIAL CHALLENGE</div>
                     <h2 class="gate-title">Gerbang Matematika Cepat</h2>
                     <p class="gate-desc">
-                        Buktikan kecepatan kalkulasi mentalmu! Jawab <span class="highlight-gold">10 Soal berturut-turut TANPA SALAH</span>.
-                        Batas waktu <span class="highlight-gold">8 detik per soal</span>. Jika salah atau waktu habis, sistem akan <span class="highlight-red">me-reset progresmu kembali ke Soal 1</span>.
+                        Buktikan kecepatan kalkulasi mentalmu! Jawab <span class="highlight-gold">10 Soal berturut-turut
+                            TANPA SALAH</span>.
+                        Batas waktu <span class="highlight-gold">8 detik per soal</span>. Jika salah atau waktu habis,
+                        sistem akan <span class="highlight-red">me-reset progresmu kembali ke Soal 1</span>.
                     </p>
                 </div>
 
@@ -76,11 +84,16 @@
                         <div style="font-size: 3rem; color: var(--color-gold); margin-bottom: 0.75rem;">
                             <i class="fa-solid fa-calculator"></i>
                         </div>
-                        <h3 style="font-family: var(--font-orbitron); color: #fff; font-size: 1.4rem; margin-bottom: 0.5rem;">GERBANG MATEMATIKA CEPAT</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.6;">
-                            Jawab <strong>10 soal aritmatika 2-digit</strong> secara beruntun dengan batas waktu <strong>8 detik per soal</strong>. Tekan tombol di bawah saat kamu siap!
+                        <h3
+                            style="font-family: var(--font-orbitron); color: #fff; font-size: 1.4rem; margin-bottom: 0.5rem;">
+                            GERBANG MATEMATIKA CEPAT</h3>
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.95rem; max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.6;">
+                            Jawab <strong>10 soal aritmatika 2-digit</strong> secara beruntun dengan batas waktu
+                            <strong>8 detik per soal</strong>. Tekan tombol di bawah saat kamu siap!
                         </p>
-                        <button id="gate-start-btn" class="btn-action primary" style="font-size: 1.15rem; padding: 0.9rem 2.5rem;">
+                        <button id="gate-start-btn" class="btn-action primary"
+                            style="font-size: 1.15rem; padding: 0.9rem 2.5rem;">
                             <i class="fa-solid fa-play"></i> Mulai Tantangan Gerbang
                         </button>
                     </div>
@@ -130,7 +143,8 @@
                             <button type="button" class="np-btn" data-key="9">9</button>
                             <button type="button" class="np-btn fn" data-key="clear">C</button>
                             <button type="button" class="np-btn" data-key="0">0</button>
-                            <button type="button" class="np-btn fn" data-key="back"><i class="fa-solid fa-delete-left"></i></button>
+                            <button type="button" class="np-btn fn" data-key="back"><i
+                                    class="fa-solid fa-delete-left"></i></button>
                         </div>
                     </div>
                 </div>
@@ -145,9 +159,11 @@
                 <!-- Dashboard Header -->
                 <div class="dashboard-header-card">
                     <div class="header-info">
-                        <div class="badge-stage"><i class="fa-solid fa-crown gold-color"></i> TAHAP 2 : ARENA 10 TANTANGAN</div>
-                        <h2 class="dash-title">Arena Clash of Champions</h2>
-                        <p class="dash-desc">Pilih kartu mini-game secara bebas. Kalahkan setiap game untuk mengunci kemenangan!</p>
+                        <div class="badge-stage"><i class="fa-solid fa-crown gold-color"></i> TAHAP 2 : ARENA 10
+                            TANTANGAN</div>
+                        <h2 class="dash-title">Arena Clash of Birthday</h2>
+                        <p class="dash-desc">Pilih kartu mini-game secara bebas. Kalahkan setiap game untuk mengunci
+                            kemenangan!</p>
                     </div>
 
                     <div class="overall-progress-box">
@@ -221,12 +237,14 @@
                 </div>
 
                 <div class="victory-content-card">
-                    <div class="victory-badge"><i class="fa-solid fa-certificate"></i> GRAND VICTORY</div>
-                    <h2 class="victory-main-header">SELAMAT! KAMU ADALAH THE ULTIMATE CHAMPION!</h2>
-                    
+                    <div class="victory-badge"><i class="fa-solid fa-cake-candles"></i> GRAND VICTORY</div>
+                    <h2 class="victory-main-header">SELAMAT ULANG TAHUN! THE ULTIMATE BIRTHDAY CHAMPION!</h2>
+
                     <div class="victory-reward-box">
                         <p class="reward-text">
-                            "Luar biasa! Kamu telah membuktikan ketajaman logika, memori, dan kecepatan berpikir tingkat tinggi setara peserta Clash of Champions. Klaim gelar <strong>'Gelar Otak Emas'</strong> dan simpan screenshot sertifikat kemenanganmu ini sebagai bukti keahlianmu!"
+                            "Luar biasa! Kamu telah membuktikan ketajaman logika, memori, dan kecerdasan berpikir setara
+                            master Clash of Birthday. Selamat, kamu berhak mendapatkan hadiah spesial <strong>'Mukbang
+                                Sushi di Rumah' 🍣🍱</strong> dan klaim sertifikat <strong>'Gelar Otak Emas'</strong>!"
                         </p>
                     </div>
 
@@ -235,9 +253,9 @@
                         <div class="cert-border">
                             <div class="cert-inner">
                                 <div class="cert-header">
-                                    <i class="fa-solid fa-brain cert-logo"></i>
+                                    <i class="fa-solid fa-cake-candles cert-logo"></i>
                                     <h3>SERTIFIKAT KEMENANGAN</h3>
-                                    <p>CLASH OF CHAMPIONS - SINGLE PLAYER ARENA</p>
+                                    <p>CLASH OF BIRTHDAY - SPECIAL EDITION ARENA</p>
                                 </div>
                                 <div class="cert-body">
                                     <p class="cert-given-to">Diberikan Penghargaan Tertinggi Kepada:</p>
@@ -245,7 +263,8 @@
                                     <div class="cert-badge-rank">
                                         <i class="fa-solid fa-medal"></i> GELAR OTAK EMAS
                                     </div>
-                                    <p class="cert-desc">Telah Berhasil Menyelesaikan 10 Tantangan Mini Game & Gerbang Matematika Cepat</p>
+                                    <p class="cert-desc">Telah Berhasil Menyelesaikan 10 Tantangan Mini Game & Gerbang
+                                        Matematika Cepat</p>
                                 </div>
                                 <div class="cert-footer">
                                     <div class="cert-signature">
@@ -291,7 +310,38 @@
         </div>
     </div>
 
+    <!-- Login / Username Input Modal (Multi-User) -->
+    <div id="login-modal" class="modal-backdrop hidden">
+        <div class="modal-card" style="max-width: 460px;">
+            <div class="modal-icon" style="color: var(--color-gold);"><i class="fa-solid fa-id-card-clip"></i></div>
+            <h3 class="modal-title" style="font-size: 1.3rem;">MASUKKAN USERNAME</h3>
+            <p class="modal-body" style="margin-bottom: 1.25rem;">
+                Setiap pemain memiliki progres permainan terpisah yang tersimpan secara aman di session & cookies.
+            </p>
+
+            <form id="login-form" onsubmit="return false;" style="margin-bottom: 1rem;">
+                <div style="margin-bottom: 1.25rem; text-align: left;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-family: var(--font-orbitron); color: var(--color-cyan); margin-bottom: 0.5rem;">
+                        <i class="fa-solid fa-user-astronaut"></i> Nama / Username Pemain:
+                    </label>
+                    <input type="text" id="login-username-input" class="modern-input" placeholder="" autocomplete="off"
+                        maxlength="25"
+                        style="width: 100%; font-size: 1.1rem; padding: 0.85rem 1.25rem; border-radius: var(--radius-md); background: rgba(15, 23, 42, 0.9); border: 1.5px solid var(--border-accent); color: #fff; outline: none; font-weight: 600;">
+                </div>
+                <div id="login-error-msg"
+                    style="display: none; color: #f87171; font-size: 0.88rem; margin-bottom: 1rem; font-weight: 600;">
+                </div>
+                <button type="submit" id="btn-submit-username" class="btn-action primary"
+                    style="width: 100%; font-size: 1.1rem; padding: 0.9rem;">
+                    <span>MASUK & MULAI MAIN</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="app.js"></script>
 </body>
+
 </html>

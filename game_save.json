@@ -1,5 +1,13 @@
 {
-    "completedGames": [],
-    "gateUnlocked": false,
-    "lastUpdated": "2026-09-14 15:59:31"
+    "users": {
+        "NILA": {
+            "username": "NILA",
+            "completedGames": [
+                "pattern-memory-grid",
+                "extreme-cryptarithm"
+            ],
+            "gateUnlocked": true,
+            "lastUpdated": "2026-09-14 18:10:07"
+        }
+    }
 }

@@ -1,11 +1,11 @@
 /**
- * Clash of Champions - Single Player Brain Arena
+ * Clash of Birthday - Single Player Brain Arena
  * Advanced Master-Level Game Engine & Logic
  * 
  * Rules:
- * 1. Tahap 1: Gerbang Matematika Cepat (10 soal 2-digit beruntun, 8 detik/soal, salah/timeout -> reset ke Soal #1, bypass cheat 'pintu').
- * 2. Tahap 2: 10 Mini-Games Arena (Tiap jenis game berisi 10 soal acak Master-Level, 10 detik/soal, jika salah/timeout -> reset ke Soal #1 untuk game tersebut).
- * 3. Tahap 3: Victory Screen (Unduh Sertifikat Gelar Otak Emas PNG beresolusi tinggi).
+ * 1. Tahap 1: Gerbang Matematika Cepat (10 soal 2-digit beruntun, 15 detik/soal, salah/timeout -> reset ke Soal #1, bypass cheat 'pintu').
+ * 2. Tahap 2: 10 Mini-Games Arena (Tiap jenis game berisi 10 soal acak Master-Level, tanpa batas waktu saat menjawab, jika salah -> reset ke Soal #1 untuk game tersebut).
+ * 3. Tahap 3: Victory Screen (Unduh Sertifikat Gelar Otak Emas PNG beresolusi tinggi + Pop-up Hadiah Mukbang Sushi).
  */
 
 // --- SOUND SYNTHESIZER (Web Audio API) ---
@@ -241,6 +241,7 @@ const MINI_GAMES_CONFIG = [
 // --- APP STATE ---
 const GameState = {
     view: 'gate',
+    currentUser: null,
     activeGameId: null,
     completedGames: new Set(),
     
@@ -259,40 +260,108 @@ const GameState = {
     miniGameTimeRemaining: 10.0,
     miniGameTimerInterval: null,
 
-    storageKey: 'coc_gamev2_session_state'
+    storageKeyPrefix: 'cob_game_user_'
 };
+
+// --- COOKIE HELPERS ---
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+    return match ? decodeURIComponent(match[3]) : null;
+}
+
+function setCookie(name, value, days = 30) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${date.toUTCString()};path=/;SameSite=Lax`;
+}
+
+function deleteCookie(name) {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax`;
+}
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     Confetti = new ConfettiEngine('confetti-canvas');
-    loadSavedSession();
     setupGlobalEvents();
     renderStreakDots();
+    initUserSession();
 });
 
-// --- PERSISTENT SESSION & STORAGE MANAGEMENT ---
-function loadSavedSession() {
-    // 1. Coba baca dari localStorage browser terlebih dahulu (instan saat buka browser baru)
+// --- USER SESSION & AUTHENTICATION MODAL ---
+function initUserSession() {
+    const savedCookieUser = getCookie('cob_username');
+    if (savedCookieUser) {
+        setUserSession(savedCookieUser);
+    } else {
+        showLoginModal();
+    }
+}
+
+function showLoginModal() {
+    const modal = document.getElementById('login-modal');
+    const input = document.getElementById('login-username-input');
+    const errorMsg = document.getElementById('login-error-msg');
+    if (errorMsg) errorMsg.style.display = 'none';
+    if (input) input.value = '';
+    if (modal) modal.classList.remove('hidden');
+    setTimeout(() => {
+        if (input) input.focus();
+    }, 150);
+}
+
+function hideLoginModal() {
+    const modal = document.getElementById('login-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function setUserSession(username) {
+    const trimmed = username.trim();
+    if (!trimmed) return;
+
+    GameState.currentUser = trimmed;
+    setCookie('cob_username', trimmed, 30);
+
+    // Update Player Tag di Nav & Sertifikat
+    const displayTag = document.getElementById('player-display-name');
+    if (displayTag) displayTag.textContent = trimmed;
+    const certName = document.getElementById('cert-player-name');
+    if (certName) certName.textContent = trimmed.toUpperCase();
+
+    hideLoginModal();
+    loadUserSavedSession(trimmed);
+}
+
+// --- PERSISTENT MULTI-USER SESSION MANAGEMENT ---
+function loadUserSavedSession(user) {
+    // Reset state lokal sebelum load user
+    GameState.completedGames.clear();
+    GameState.gateStreak = 0;
+
+    const userKey = GameState.storageKeyPrefix + encodeURIComponent(user);
+
+    // 1. Coba baca dari localStorage browser untuk user ini
     try {
-        const rawLocal = localStorage.getItem(GameState.storageKey) || sessionStorage.getItem(GameState.storageKey);
+        const rawLocal = localStorage.getItem(userKey);
         if (rawLocal) {
             const data = JSON.parse(rawLocal);
             applySessionData(data);
         }
     } catch (e) {
-        console.warn('Could not read localStorage:', e);
+        console.warn('Could not read localStorage for user:', e);
     }
 
-    // 2. Sinkronisasi dengan PHP Session & file persisten backend (jika via server PHP/XAMPP)
-    fetch('session.php?action=get')
+    // 2. Sinkronisasi dengan Backend PHP Multi-User
+    fetch(`session.php?action=get&username=${encodeURIComponent(user)}`)
         .then(res => res.json())
         .then(res => {
             if (res.status === 'success' && res.has_save && res.data) {
                 applySessionData(res.data);
+            } else if (res.status === 'no_user') {
+                showLoginModal();
             }
         })
         .catch(() => {
-            console.log('Running in client-side persistence mode.');
+            console.log('Running in client-side persistence mode for user:', user);
         });
 }
 
@@ -305,19 +374,27 @@ function applySessionData(data) {
         GameState.gateStreak = 10;
         switchView('dashboard');
         renderDashboard();
+    } else {
+        switchView('gate');
+        renderStreakDots();
     }
 }
 
 function saveState() {
+    if (!GameState.currentUser) return;
+
     const payload = {
+        username: GameState.currentUser,
         completedGames: Array.from(GameState.completedGames),
         gateUnlocked: GameState.gateStreak >= 10
     };
 
-    // 1. Simpan permanen ke localStorage & sessionStorage browser
+    const userKey = GameState.storageKeyPrefix + encodeURIComponent(GameState.currentUser);
+
+    // 1. Simpan permanen ke localStorage & cookies browser
     try {
-        localStorage.setItem(GameState.storageKey, JSON.stringify(payload));
-        sessionStorage.setItem(GameState.storageKey, JSON.stringify(payload));
+        localStorage.setItem(userKey, JSON.stringify(payload));
+        setCookie('cob_username', GameState.currentUser, 30);
     } catch (e) {
         console.warn('Could not save to localStorage:', e);
     }
@@ -381,6 +458,60 @@ function setupGlobalEvents() {
         });
     });
 
+    // Event Login / Username Form
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('login-username-input');
+            const errorMsg = document.getElementById('login-error-msg');
+            const username = input ? input.value.trim() : '';
+
+            if (!username) {
+                if (errorMsg) {
+                    errorMsg.textContent = 'Silakan ketikkan username terlebih dahulu!';
+                    errorMsg.style.display = 'block';
+                }
+                if (input) input.focus();
+                return;
+            }
+
+            if (username.length < 2) {
+                if (errorMsg) {
+                    errorMsg.textContent = 'Username minimal 2 karakter!';
+                    errorMsg.style.display = 'block';
+                }
+                return;
+            }
+
+            Sound.click();
+            setUserSession(username);
+        });
+    }
+
+    // Event Ganti User (Logout / Switch User)
+    const switchUserBtn = document.getElementById('btn-switch-user');
+    if (switchUserBtn) {
+        switchUserBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            Sound.click();
+            showConfirmModal('Ganti Pemain?', 'Ingin berganti akun pemain? Progres akun saat ini akan tetap tersimpan secara aman di session.', () => {
+                deleteCookie('cob_username');
+                fetch('session.php?action=logout').catch(() => {});
+                showLoginModal();
+            });
+        });
+    }
+
+    const profileTag = document.getElementById('player-profile-tag');
+    if (profileTag) {
+        profileTag.addEventListener('click', () => {
+            if (!GameState.currentUser) {
+                showLoginModal();
+            }
+        });
+    }
+
     document.getElementById('modal-btn-ok').addEventListener('click', () => {
         Sound.click();
         closeModal();
@@ -393,12 +524,14 @@ function setupGlobalEvents() {
 
     document.getElementById('btn-restart-all').addEventListener('click', () => {
         Sound.click();
-        showConfirmModal('Ulangi Semua Tantangan?', 'Apakah kamu yakin ingin me-reset seluruh riwayat progres permainan dari awal?', () => {
+        showConfirmModal('Ulangi Semua Tantangan?', `Apakah kamu yakin ingin me-reset seluruh riwayat progres permainan untuk ${GameState.currentUser || 'pemain ini'} dari awal?`, () => {
             stopQuestionTimer();
             stopMiniGameTimer();
-            localStorage.removeItem(GameState.storageKey);
-            sessionStorage.removeItem(GameState.storageKey);
-            fetch('session.php?action=reset').catch(() => {});
+            if (GameState.currentUser) {
+                const userKey = GameState.storageKeyPrefix + encodeURIComponent(GameState.currentUser);
+                localStorage.removeItem(userKey);
+                fetch(`session.php?action=reset&username=${encodeURIComponent(GameState.currentUser)}`).catch(() => {});
+            }
             GameState.completedGames.clear();
             GameState.gateStreak = 0;
             const gateStartCard = document.getElementById('gate-start-card');
@@ -2012,6 +2145,22 @@ function triggerGrandVictory() {
     Sound.victory();
     Confetti.burst(200);
 
+    // Pop-up notifikasi reward khusus
+    setTimeout(() => {
+        showModal(
+            '🎁 SELAMAT! ANDA MENDAPATKAN HADIAH!',
+            `Luar biasa! Kamu telah berhasil menaklukkan seluruh tantangan di Arena.<br><br>
+            <div style="background: rgba(245, 158, 11, 0.15); border: 2px dashed var(--color-gold); border-radius: 12px; padding: 1.25rem; margin: 1rem 0; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">🍣🍱🍣</div>
+                <h3 style="font-family: var(--font-orbitron); color: var(--color-gold); font-size: 1.3rem; margin-bottom: 0.3rem;">HADIAH SPESIAL:</h3>
+                <p style="color: #fff; font-size: 1.15rem; font-weight: 700;">Mukbang Sushi di Rumah 🎉</p>
+                <small style="color: var(--text-secondary);">Tunjukkan layar kemenangan ini untuk mengklaim paket sushi favoritmu!</small>
+            </div>`,
+            'fa-solid fa-gift',
+            true
+        );
+    }, 500);
+
     const interval = setInterval(() => {
         if (GameState.view !== 'victory') {
             clearInterval(interval);
@@ -2049,7 +2198,7 @@ function downloadCertificatePNG() {
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '600 20px sans-serif';
-    ctx.fillText('CLASH OF CHAMPIONS - THE ULTIMATE BRAIN ARENA', 600, 185);
+    ctx.fillText('CLASH OF BIRTHDAY - SPECIAL BIRTHDAY BRAIN ARENA', 600, 185);
 
     ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
     ctx.lineWidth = 2;
@@ -2064,7 +2213,8 @@ function downloadCertificatePNG() {
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 52px sans-serif';
-    ctx.fillText('CHAMPION OF MIND', 600, 350);
+    const certWinner = GameState.currentUser ? GameState.currentUser.toUpperCase() : 'BIRTHDAY HERO';
+    ctx.fillText(certWinner, 600, 350);
 
     ctx.fillStyle = '#f59e0b';
     ctx.font = 'bold 30px sans-serif';
@@ -2072,8 +2222,8 @@ function downloadCertificatePNG() {
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '20px sans-serif';
-    ctx.fillText('Telah Berhasil Menyelesaikan 10 Tantangan Mini Game (10 Soal Acak per Game)', 600, 480);
-    ctx.fillText('Membuktikan Ketajaman Logika, Memori, dan Kecepatan Berpikir Tingkat Tinggi', 600, 515);
+    ctx.fillText('Telah Berhasil Menyelesaikan 10 Tantangan Mini Game & Gerbang Matematika', 600, 480);
+    ctx.fillText('Membuktikan Ketajaman Logika, Memori, dan Kecerdasan Berpikir Tingkat Tinggi', 600, 515);
 
     ctx.fillStyle = '#64748b';
     ctx.font = '18px sans-serif';
@@ -2093,7 +2243,7 @@ function downloadCertificatePNG() {
     ctx.fillText(`Diterbitkan pada: ${dateStr}`, 600, 720);
 
     const link = document.createElement('a');
-    link.download = `Sertifikat-Clash-Of-Champions-${Date.now()}.png`;
+    link.download = `Sertifikat-Clash-Of-Birthday-${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
 }
