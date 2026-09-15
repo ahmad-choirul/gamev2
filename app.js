@@ -1779,10 +1779,37 @@ function renderMathGridMatrix(container) {
 function renderSpatialRotation(container) {
     stopMiniGameTimer();
 
+    function getTransformMatrix(angleDeg, flipX, flipY) {
+        const rad = (angleDeg * Math.PI) / 180;
+        const sx = flipX ? -1 : 1;
+        const sy = flipY ? -1 : 1;
+        return {
+            m11: sx * Math.cos(rad),
+            m12: -sy * Math.sin(rad),
+            m21: sx * Math.sin(rad),
+            m22: sy * Math.cos(rad)
+        };
+    }
+
+    function isTransformationEqual(angle1, fx1, fy1, angle2, fx2, fy2) {
+        const m1 = getTransformMatrix(angle1, fx1, fy1);
+        const m2 = getTransformMatrix(angle2, fx2, fy2);
+        const eps = 0.01;
+        return (
+            Math.abs(m1.m11 - m2.m11) < eps &&
+            Math.abs(m1.m12 - m2.m12) < eps &&
+            Math.abs(m1.m21 - m2.m21) < eps &&
+            Math.abs(m1.m22 - m2.m22) < eps
+        );
+    }
+
     const angleList = [45, 90, 135, 180, 225, 270, 315];
-    const targetAngle = angleList[Math.floor(Math.random() * angleList.length)];
-    const targetFlipX = Math.random() > 0.5;
-    const targetFlipY = Math.random() > 0.5;
+    let targetAngle, targetFlipX, targetFlipY;
+    do {
+        targetAngle = angleList[Math.floor(Math.random() * angleList.length)];
+        targetFlipX = Math.random() > 0.5;
+        targetFlipY = Math.random() > 0.5;
+    } while (isTransformationEqual(0, false, false, targetAngle, targetFlipX, targetFlipY));
 
     let curAngle = 0;
     let curFlipX = false;
@@ -1855,7 +1882,7 @@ function renderSpatialRotation(container) {
         Sound.click();
         startWrap.style.display = 'none';
         controls.style.display = 'flex';
-        document.getElementById('sp-status').textContent = 'Putar sudut (45°) dan gunakan kombinasi Flip agar orientasi cocok dalam 10 detik!';
+        document.getElementById('sp-status').textContent = 'Putar sudut (45°) dan gunakan kombinasi Flip agar orientasi cocok!';
         startMiniGameTimer();
     });
 
@@ -1881,10 +1908,10 @@ function renderSpatialRotation(container) {
     });
 
     document.getElementById('sp-match-btn').addEventListener('click', () => {
-        if (curAngle === targetAngle && curFlipX === targetFlipX && curFlipY === targetFlipY) {
+        if (isTransformationEqual(curAngle, curFlipX, curFlipY, targetAngle, targetFlipX, targetFlipY)) {
             handleMiniGameSuccess();
         } else {
-            handleMiniGameFailure(`Orientasi sudut/cermin belum cocok! Progres di-reset ke Soal #1!`);
+            handleMiniGameFailure(`Orientasi sudut/cermin belum cocok dengan siluet target! Progres di-reset ke Soal #1!`);
         }
     });
 }
