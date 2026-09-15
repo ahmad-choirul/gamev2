@@ -168,9 +168,9 @@ const MINI_GAMES_CONFIG = [
         id: 'pattern-memory-grid',
         num: 3,
         title: 'Pattern Memory Grid',
-        category: '4-Step Spatial Light Sequence',
+        category: '6-Step Spatial Light Sequence',
         icon: 'fa-table-cells',
-        desc: 'Hafalkan urutan 4 ubin kilat yang menyala berurutan dan ulangi dengan presisi!',
+        desc: 'Hafalkan urutan 6 ubin kilat yang menyala berurutan dan ulangi dengan presisi!',
         render: renderPatternMemory
     },
     {
@@ -213,9 +213,9 @@ const MINI_GAMES_CONFIG = [
         id: 'number-sequence',
         num: 8,
         title: 'Pola Deret Angka',
-        category: 'Analisis Deret & Logika Barisan',
+        category: 'Analisis Deret & Logika Barisan (60s)',
         icon: 'fa-arrow-trend-up',
-        desc: 'Analisis logika deret angka unik (aritmatika, geometri, kuadrat, atau fibonacci) lalu temukan angka berikutnya!',
+        desc: 'Analisis logika deret angka unik (aritmatika, geometri, kuadrat, atau fibonacci) lalu temukan angka berikutnya dalam 60 detik!',
         render: renderNumberSequence
     },
     {
@@ -931,9 +931,50 @@ function renderMiniGameTracker() {
     }
 }
 
-function startMiniGameTimer() {
+function startMiniGameTimer(durationSeconds = null) {
     stopMiniGameTimer();
-    // Mode Edukasi: Waktu menjawab santai & unlimited (tanpa batas waktu)
+    const timerElem = document.getElementById('arena-timer');
+    const timerBadge = document.getElementById('arena-timer-badge');
+    const fillElem = document.getElementById('arena-countdown-fill');
+
+    if (!durationSeconds) {
+        if (timerBadge) timerBadge.style.display = 'none';
+        if (fillElem) fillElem.style.width = '100%';
+        return;
+    }
+
+    if (timerBadge) {
+        timerBadge.style.display = 'inline-flex';
+        timerBadge.classList.remove('urgent');
+    }
+
+    GameState.miniGameTimeRemaining = durationSeconds;
+    const totalDuration = durationSeconds;
+
+    function renderTimerUI() {
+        if (timerElem) timerElem.textContent = `${GameState.miniGameTimeRemaining.toFixed(1)}s`;
+        if (fillElem) {
+            const pct = Math.max(0, (GameState.miniGameTimeRemaining / totalDuration) * 100);
+            fillElem.style.width = `${pct}%`;
+        }
+        if (GameState.miniGameTimeRemaining <= 10.0) {
+            if (timerBadge) timerBadge.classList.add('urgent');
+        } else {
+            if (timerBadge) timerBadge.classList.remove('urgent');
+        }
+    }
+
+    renderTimerUI();
+
+    GameState.miniGameTimerInterval = setInterval(() => {
+        GameState.miniGameTimeRemaining = Math.max(0, GameState.miniGameTimeRemaining - 0.1);
+        renderTimerUI();
+
+        if (GameState.miniGameTimeRemaining <= 0) {
+            stopMiniGameTimer();
+            handleMiniGameFailure(`Waktu ${durationSeconds} detik habis! Progres di-reset ke Soal #1!`);
+        }
+    }, 100);
 }
 
 function stopMiniGameTimer() {
@@ -941,6 +982,8 @@ function stopMiniGameTimer() {
         clearInterval(GameState.miniGameTimerInterval);
         GameState.miniGameTimerInterval = null;
     }
+    const timerBadge = document.getElementById('arena-timer-badge');
+    if (timerBadge) timerBadge.classList.remove('urgent');
 }
 
 function handleMiniGameSuccess() {
@@ -965,10 +1008,14 @@ function handleMiniGameFailure(reason = 'Jawaban Salah! Progres game ini di-rese
     void board.offsetWidth;
     board.classList.add('shake-anim');
 
-    GameState.miniGameRound = 1; // Strict reset to Question 1
+    // Khusus Memory Madness: tidak di-reset ke Soal #1, tetap di ronde saat ini hingga berhasil menyelesaikan 10 soal
+    if (GameState.activeGameId !== 'memory-madness') {
+        GameState.miniGameRound = 1; // Strict reset to Question 1 for other games
+    }
     renderMiniGameTracker();
 
-    showModal('GAGAL DI ARENA', reason, 'fa-solid fa-circle-xmark', false);
+    const modalTitle = (GameState.activeGameId === 'memory-madness') ? 'JAWABAN KURANG TEPAT' : 'GAGAL DI ARENA';
+    showModal(modalTitle, reason, 'fa-solid fa-circle-xmark', false);
 
     setTimeout(() => {
         if (GameState.view === 'arena') {
@@ -1111,7 +1158,7 @@ function renderMemoryMadness(container) {
                         tile.classList.add('selected');
                         handleMiniGameSuccess();
                     } else {
-                        handleMiniGameFailure(`Posisi salah! Simbol ${targetIcon} sebenarnya ada di Baris ${targetRow}, Kolom ${targetCol}. Progres di-reset ke Soal #1!`);
+                        handleMiniGameFailure(`Posisi salah! Simbol ${targetIcon} sebenarnya ada di Baris ${targetRow}, Kolom ${targetCol}. Silakan coba lagi!`);
                     }
                 });
             });
@@ -1124,7 +1171,7 @@ function renderMemoryMadness(container) {
                     if (chosen === targetIcon) {
                         handleMiniGameSuccess();
                     } else {
-                        handleMiniGameFailure(`Jawaban keliru! Simbol di Baris ${targetRow}, Kolom ${targetCol} adalah ${targetIcon}. Progres di-reset ke Soal #1!`);
+                        handleMiniGameFailure(`Jawaban keliru! Simbol di Baris ${targetRow}, Kolom ${targetCol} adalah ${targetIcon}. Silakan coba lagi!`);
                     }
                 });
             });
@@ -1238,12 +1285,12 @@ function renderBlindShuffle(container) {
 }
 
 // ==========================================================
-// MINI GAME 3: PATTERN MEMORY GRID (4-STEP - TOMBOL MULAI -> POLA -> 10s TEBAK)
+// MINI GAME 3: PATTERN MEMORY GRID (6-STEP - TOMBOL MULAI -> POLA -> 10s TEBAK)
 // ==========================================================
 function renderPatternMemory(container) {
     stopMiniGameTimer();
 
-    const sequenceLength = 4;
+    const sequenceLength = 6;
     const pattern = [];
     while (pattern.length < sequenceLength) {
         const r = Math.floor(Math.random() * 16);
@@ -1257,7 +1304,7 @@ function renderPatternMemory(container) {
             <i class="fa-solid fa-table-cells banner-icon"></i>
             <div class="banner-text">
                 <h4>Pattern Memory (Soal #${GameState.miniGameRound} / 10)</h4>
-                <p id="pm-status">Siapkan fokusmu, lalu tekan tombol <strong>"Mulai Pola"</strong> untuk melihat 4 ubin yang menyala!</p>
+                <p id="pm-status">Siapkan fokusmu, lalu tekan tombol <strong>"Mulai Pola"</strong> untuk melihat 6 ubin yang menyala!</p>
             </div>
         </div>
 
@@ -1269,7 +1316,7 @@ function renderPatternMemory(container) {
 
         <div style="text-align: center; margin-top: 1rem;" id="pm-btn-wrapper">
             <button id="pm-start-btn" class="btn-action primary" style="font-size: 1.1rem; padding: 0.85rem 2rem;">
-                <i class="fa-solid fa-play"></i> Mulai Pola (4 Langkah)
+                <i class="fa-solid fa-play"></i> Mulai Pola (6 Langkah)
             </button>
         </div>
 
@@ -1287,7 +1334,7 @@ function renderPatternMemory(container) {
 
     function playPattern() {
         isShowingPattern = true;
-        document.getElementById('pm-status').innerHTML = '<span class="gold-color"><i class="fa-solid fa-lightbulb"></i> PERHATIKAN URUTAN 4 KOTAK YANG MENYALA!</span>';
+        document.getElementById('pm-status').innerHTML = '<span class="gold-color"><i class="fa-solid fa-lightbulb"></i> PERHATIKAN URUTAN 6 KOTAK YANG MENYALA!</span>';
         document.getElementById('pm-step-indicator').textContent = 'Memutar Pola...';
 
         let idx = 0;
@@ -1297,7 +1344,7 @@ function renderPatternMemory(container) {
                 isShowingPattern = false;
                 isGameActive = true;
                 startMiniGameTimer();
-                document.getElementById('pm-status').textContent = `ULANGI URUTAN 4 KOTAK SEKARANG DALAM 10 DETIK!`;
+                document.getElementById('pm-status').textContent = `ULANGI URUTAN 6 KOTAK SEKARANG DALAM 10 DETIK!`;
                 document.getElementById('pm-step-indicator').textContent = `Langkah: 0 / ${sequenceLength}`;
                 return;
             }
@@ -1474,10 +1521,6 @@ function renderNumberChain(container) {
     const n5 = Math.floor(Math.random() * 6) + 2;
 
     const opList = ['+', '-', '×'];
-    const chosen1 = opList[Math.floor(Math.random() * opList.length)];
-    const chosen2 = opList[Math.floor(Math.random() * opList.length)];
-    const chosen3 = opList[Math.floor(Math.random() * opList.length)];
-    const chosen4 = opList[Math.floor(Math.random() * opList.length)];
 
     function calc5(a, o1, b, o2, c, o3, d, o4, e) {
         let s1 = o1 === '+' ? a + b : o1 === '-' ? a - b : a * b;
@@ -1487,7 +1530,44 @@ function renderNumberChain(container) {
         return s4;
     }
 
-    const targetVal = calc5(n1, chosen1, n2, chosen2, n3, chosen3, n4, chosen4, n5);
+    // Buat kombinasi kunci target yang bervariasi secara acak (tidak semua '+')
+    let chosen1, chosen2, chosen3, chosen4, targetVal;
+    let attempts = 0;
+    do {
+        chosen1 = opList[Math.floor(Math.random() * opList.length)];
+        chosen2 = opList[Math.floor(Math.random() * opList.length)];
+        chosen3 = opList[Math.floor(Math.random() * opList.length)];
+        chosen4 = opList[Math.floor(Math.random() * opList.length)];
+
+        // Pastikan bukan semua '+' agar operasi bervariasi dan menantang
+        const allPlus = (chosen1 === '+' && chosen2 === '+' && chosen3 === '+' && chosen4 === '+');
+        if (!allPlus) {
+            targetVal = calc5(n1, chosen1, n2, chosen2, n3, chosen3, n4, chosen4, n5);
+            if (targetVal >= 0 && targetVal <= 300) {
+                break;
+            }
+        }
+        attempts++;
+    } while (attempts < 100);
+
+    if (targetVal === undefined) {
+        chosen1 = '+'; chosen2 = '×'; chosen3 = '-'; chosen4 = '+';
+        targetVal = calc5(n1, chosen1, n2, chosen2, n3, chosen3, n4, chosen4, n5);
+    }
+
+    // Acak pilihan dropdown awal agar TIDAK langsung cocok atau default ke kunci jawaban
+    let initOp1, initOp2, initOp3, initOp4;
+    let initAttempts = 0;
+    do {
+        initOp1 = opList[Math.floor(Math.random() * opList.length)];
+        initOp2 = opList[Math.floor(Math.random() * opList.length)];
+        initOp3 = opList[Math.floor(Math.random() * opList.length)];
+        initOp4 = opList[Math.floor(Math.random() * opList.length)];
+        initAttempts++;
+    } while (initAttempts < 50 && (
+        (initOp1 === chosen1 && initOp2 === chosen2 && initOp3 === chosen3 && initOp4 === chosen4) ||
+        calc5(n1, initOp1, n2, initOp2, n3, initOp3, n4, initOp4, n5) === targetVal
+    ));
 
     container.innerHTML = `
         <div class="game-instruction-banner">
@@ -1504,13 +1584,29 @@ function renderNumberChain(container) {
 
         <div class="chain-board" style="gap: 0.35rem; flex-wrap: wrap;">
             <div class="chain-num-box" style="width: 50px; height: 50px; font-size: 1.2rem;">${n1}</div>
-            <select id="nc-op1" class="chain-op-select" style="padding: 0.3rem;" disabled><option value="+">+</option><option value="-">-</option><option value="×">×</option></select>
+            <select id="nc-op1" class="chain-op-select" style="padding: 0.3rem;" disabled>
+                <option value="+" ${initOp1 === '+' ? 'selected' : ''}>+</option>
+                <option value="-" ${initOp1 === '-' ? 'selected' : ''}>-</option>
+                <option value="×" ${initOp1 === '×' ? 'selected' : ''}>×</option>
+            </select>
             <div class="chain-num-box" style="width: 50px; height: 50px; font-size: 1.2rem;">${n2}</div>
-            <select id="nc-op2" class="chain-op-select" style="padding: 0.3rem;" disabled><option value="+">+</option><option value="-">-</option><option value="×">×</option></select>
+            <select id="nc-op2" class="chain-op-select" style="padding: 0.3rem;" disabled>
+                <option value="+" ${initOp2 === '+' ? 'selected' : ''}>+</option>
+                <option value="-" ${initOp2 === '-' ? 'selected' : ''}>-</option>
+                <option value="×" ${initOp2 === '×' ? 'selected' : ''}>×</option>
+            </select>
             <div class="chain-num-box" style="width: 50px; height: 50px; font-size: 1.2rem;">${n3}</div>
-            <select id="nc-op3" class="chain-op-select" style="padding: 0.3rem;" disabled><option value="+">+</option><option value="-">-</option><option value="×">×</option></select>
+            <select id="nc-op3" class="chain-op-select" style="padding: 0.3rem;" disabled>
+                <option value="+" ${initOp3 === '+' ? 'selected' : ''}>+</option>
+                <option value="-" ${initOp3 === '-' ? 'selected' : ''}>-</option>
+                <option value="×" ${initOp3 === '×' ? 'selected' : ''}>×</option>
+            </select>
             <div class="chain-num-box" style="width: 50px; height: 50px; font-size: 1.2rem;">${n4}</div>
-            <select id="nc-op4" class="chain-op-select" style="padding: 0.3rem;" disabled><option value="+">+</option><option value="-">-</option><option value="×">×</option></select>
+            <select id="nc-op4" class="chain-op-select" style="padding: 0.3rem;" disabled>
+                <option value="+" ${initOp4 === '+' ? 'selected' : ''}>+</option>
+                <option value="-" ${initOp4 === '-' ? 'selected' : ''}>-</option>
+                <option value="×" ${initOp4 === '×' ? 'selected' : ''}>×</option>
+            </select>
             <div class="chain-num-box" style="width: 50px; height: 50px; font-size: 1.2rem;">${n5}</div>
             <div class="chain-num-box" style="width: 50px; height: 50px; font-size: 1.2rem; border-color: var(--color-gold); color: var(--color-gold);">=</div>
             <div class="chain-num-box" id="nc-result" style="width: 70px; height: 50px; font-size: 1.2rem; color: var(--color-cyan);">?</div>
@@ -1556,7 +1652,7 @@ function renderNumberChain(container) {
         op3.disabled = false;
         op4.disabled = false;
         updatePreview();
-        document.getElementById('nc-status').textContent = `Susun 4 operator dari kiri ke kanan untuk mencapai target ${targetVal} dalam 10 detik!`;
+        document.getElementById('nc-status').textContent = `Susun 4 operator dari kiri ke kanan untuk mencapai target ${targetVal}!`;
         startMiniGameTimer();
     });
 
@@ -1932,8 +2028,8 @@ function renderNumberSequence(container) {
         Sound.click();
         startWrap.style.display = 'none';
         optionsGrid.style.display = 'grid';
-        document.getElementById('ns-status').textContent = 'Pilih angka lanjutan yang sesuai dengan pola deret!';
-        startMiniGameTimer();
+        document.getElementById('ns-status').textContent = 'Pilih angka lanjutan yang sesuai dengan pola deret dalam 60 detik!';
+        startMiniGameTimer(60);
     });
 
     container.querySelectorAll('.ns-opt-btn').forEach(btn => {
